@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.13)
 project(fastcgi_blog)
 
 set(CMAKE_CXX_STANDARD 20)
