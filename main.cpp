@@ -29,6 +29,7 @@ int main() {
              << "  </head>\n"
              << "  <body>\n"
              << "    <h1>Hello, World from FastCGI!</h1>\n"
+             << "URI: " << FCGX_GetParam("REQUEST_URI", request.envp) << "\n"
              << "  </body>\n"
              << "</html>\n";
     }
