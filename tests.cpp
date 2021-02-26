@@ -24,6 +24,11 @@ TEST(Tree, Build) {
     os << "test value";
     os.close();
 
+    std::filesystem::create_directory(currentPath + "/testtree/folder");
+    os.open(currentPath + "/testtree/folder/anotherfile.txt", std::ofstream::out | std::ofstream::trunc);
+    os << "test value 2";
+    os.close();
+
     Tree t(currentPath + "/testtree");
     t.build();
 
@@ -31,6 +36,15 @@ TEST(Tree, Build) {
     ASSERT_NE(n, nullptr);
     EXPECT_EQ(n->getValue(), "test value");
 
+    n = t.getRoot()->get("/folder/anotherfile.txt");
+    ASSERT_NE(n, nullptr);
+    EXPECT_EQ(n->getValue(), "test value 2");
+
     std::filesystem::remove_all(currentPath + "/testtree");
+
+    t.build();
+
+    n = t.getRoot()->get("textfile.txt");
+    EXPECT_EQ(n, nullptr);
 
 };
