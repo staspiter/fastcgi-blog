@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 3.13)
 set(CMAKE_CXX_STANDARD 20)
 
-include_directories(libraries/fcgi2/include)
+include_directories(
+        libraries/fcgi2/include
+        libraries/rapidjson/include
+        )
 
 add_subdirectory(libraries/googletest)
 

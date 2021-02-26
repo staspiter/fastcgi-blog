@@ -12,6 +12,10 @@
 
 #include "Utils.h"
 
+#include "rapidjson/document.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/stringbuffer.h"
+
 class Node {
 
 private:
@@ -30,6 +34,49 @@ public:
     ~Node() {
         for (const auto &n : sub)
             delete std::get<1>(n);
+    }
+
+    void buildFromJson(rapidjson::Value& json) {
+
+        if (json.IsObject()) {
+            for (auto& [key, value] : json.GetObject()) {
+                Node* n = new Node("", this);
+                sub.emplace_back(key.GetString(), n);
+                n->buildFromJson(value);
+            }
+        }
+
+        else if (json.IsArray()) {
+            int i = 0;
+            for (auto& item: json.GetArray()) {
+                Node* n = new Node("", this);
+                sub.emplace_back(std::to_string(i), n);
+                n->buildFromJson(item);
+                i++;
+            }
+
+        }
+
+        else if (json.IsString()) {
+            value = json.GetString();
+        }
+
+        else if (json.IsInt()) {
+            value = std::to_string(json.GetInt());
+        }
+
+        else if (json.IsDouble()) {
+            value = std::to_string(json.GetDouble());
+        }
+
+        else if (json.IsInt64()) {
+            value = std::to_string(json.IsInt64());
+        }
+
+        else if (json.IsBool()) {
+            value = json.GetBool() ? "true" : "false";
+        }
+
     }
 
     void build(const std::string& path) {
@@ -57,8 +104,7 @@ public:
                 n->build(path + '/' + itemStr);
 
             }
-
-
+            
         } else {
             // Load the file
 
@@ -69,10 +115,18 @@ public:
                 std::ifstream t(path);
                 std::string str((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
 
-                value = str;
+                if (ext == "txt")
+                    value = str;
 
-                // TODO: Parse json and build nodes
+                else {
+                    // Parse json and build nodes
 
+                    rapidjson::Document json;
+                    rapidjson::ParseResult result = json.Parse(str.c_str());
+                    if (result)
+                        buildFromJson(json);
+
+                }
             }
 
         }

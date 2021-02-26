@@ -48,3 +48,38 @@ TEST(Tree, Build) {
     EXPECT_EQ(n, nullptr);
 
 };
+
+TEST(Tree, BuildFromJson) {
+
+    std::string currentPath = std::filesystem::current_path().string();
+
+    std::filesystem::create_directory(currentPath + "/testtree");
+    std::ofstream os;
+    os.open(currentPath + "/testtree/testjson.json", std::ofstream::out | std::ofstream::trunc);
+    os << R"(
+{
+    "key": "value",
+    "object": {
+        "a": "b",
+        "foo" : [
+            "bar",
+            123.45
+        ]
+    }
+})";
+    os.close();
+
+    Tree t(currentPath + "/testtree");
+    t.build();
+
+    auto n = t.getRoot()->get("/testjson.json/key");
+    ASSERT_NE(n, nullptr);
+    EXPECT_EQ(n->getValue(), "value");
+
+    n = t.getRoot()->get("/testjson.json/object/foo/0");
+    ASSERT_NE(n, nullptr);
+    EXPECT_EQ(n->getValue(), "bar");
+
+    std::filesystem::remove_all(currentPath + "/testtree");
+
+}
