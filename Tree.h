@@ -78,7 +78,7 @@ public:
         }
     }
 
-    Node* get(std::vector<std::string> pathVector) {
+    Node* get(std::vector<std::string>& pathVector) {
 
         if (pathVector.empty())
             return this;
@@ -107,7 +107,8 @@ public:
     }
 
     Node* get(const std::string& path) {
-        return get(Utils::Split(path, '/'));
+        auto v = Utils::Split(path, '/');
+        return get(v);
     }
 
     Node* getRoot() {
