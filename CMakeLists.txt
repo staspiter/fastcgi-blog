@@ -9,9 +9,9 @@ include_directories(
 add_subdirectory(libraries/googletest)
 
 project(fastcgi_blog)
-add_executable(fastcgi_blog main.cpp Tree.h Utils.h)
+add_executable(fastcgi_blog main.cpp Tree.h Utils.h Generator.h)
 target_link_libraries(fastcgi_blog fcgi fcgi++)
 
 project(tests)
-add_executable(tests tests.cpp Tree.h)
+add_executable(tests tests.cpp Tree.h Utils.h Generator.h)
 target_link_libraries(tests gtest gtest_main)

@@ -110,15 +110,12 @@ public:
 
             std::string ext = path.substr(path.find_last_of('.') + 1);
 
-            if (ext == "txt" || ext == "json") {
+            if (ext == "txt" || ext == "json" || ext == "html") {
 
                 std::ifstream t(path);
                 std::string str((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
 
-                if (ext == "txt")
-                    value = str;
-
-                else {
+                if (ext == "json") {
                     // Parse json and build nodes
 
                     rapidjson::Document json;
@@ -127,12 +124,14 @@ public:
                         buildFromJson(json);
 
                 }
+                else
+                    value = str;
             }
 
         }
     }
 
-    Node* get(std::vector<std::string>& pathVector) {
+    Node* get(std::vector<std::string>& pathVector, std::vector<std::string>* pages = nullptr) {
 
         if (pathVector.empty())
             return this;
@@ -146,23 +145,27 @@ public:
             nextNode = getRoot();
 
         else {
-            for (const auto &n : sub)
-                if (std::get<0>(n) == p) {
+            for (const auto &n : sub) {
+                auto applicablePage = Utils::IsPageApplicable(p, std::get<0>(n));
+                if (!applicablePage.empty()) {
+                    if (pages)
+                        pages->push_back(applicablePage);
                     nextNode = std::get<1>(n);
                     break;
                 }
+            }
         }
 
         if (!nextNode)
             return nullptr;
 
-        return nextNode->get(pathVector);
+        return nextNode->get(pathVector, pages);
 
     }
 
-    Node* get(const std::string& path) {
+    Node* get(const std::string& path, std::vector<std::string>* pages = nullptr) {
         auto v = Utils::Split(path, '/');
-        return get(v);
+        return get(v, pages);
     }
 
     Node* getRoot() {

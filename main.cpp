@@ -1,3 +1,7 @@
+//
+// Created by Stas Piter on 24.02.2021.
+//
+
 #include <iostream>
 #include "fcgio.h"
 
