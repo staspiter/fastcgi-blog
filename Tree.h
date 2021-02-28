@@ -1,5 +1,5 @@
 //
-// Created by Stas on 25.02.2021.
+// Created by Stas Piter on 25.02.2021.
 //
 
 #ifndef FASTCGI_BLOG_TREE_H
