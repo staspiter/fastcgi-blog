@@ -12,6 +12,39 @@
 
 class Generator {
 
+private:
+
+    static std::string ProcessVariable(Node* currentPage, Node* templatePage, const std::string& templateName, FCGX_Request* request,
+                                const std::string& templatesPath, std::string variableName) {
+
+        if (variableName[0] != '$')
+            return "";
+
+        variableName = variableName.substr(1);
+
+        // PATH
+        if (variableName == "PATH" || variableName == "PATH_TEMPLATE") {
+            Node* p = currentPage;
+            if (variableName == "PATH_TEMPLATE")
+                p = templatePage;
+            auto splitPath = Utils::Split(p->getPath(), '/');
+            std::string resultPath;
+            for (const auto &path : splitPath)
+                resultPath.append(path.substr(0, path.find_first_of('.')) + '/');
+            return resultPath;
+        }
+
+        // FCGI variables
+        else if (request) {
+#ifndef tests
+            return FCGX_GetParam(params[0].c_str(), request->envp);
+#endif
+        }
+
+        return "";
+
+    }
+
 public:
 
     static std::string Generate(Node* currentPage, Node* templatePage, const std::string& templateName, FCGX_Request* request,
@@ -45,14 +78,11 @@ public:
 
             if (function == "print" && !params.empty() && printing) {
 
-                if (params[0][0] == '$' && request) {
-                    // FCGI parameter
+                if (params[0][0] == '$')
+                    result.append(ProcessVariable(currentPage, templatePage, templateName, request,
+                                                  templatesPath, params[0]));
 
-#ifndef tests
-                    result.append(FCGX_GetParam(params[0].substr(1).c_str(), request->envp));
-#endif
-
-                } else {
+                else {
                     // Node value or generated template
 
                     Node* p = templatePage;
@@ -121,11 +151,10 @@ public:
 
                 std::string variable = params[0];
                 std::string value;
-                if (variable[0] == '$' && request) {
-#ifndef tests
-                    value = FCGX_GetParam(variable.substr(1).c_str(), request->envp);
-#endif
-                } else {
+                if (variable[0] == '$')
+                    value = ProcessVariable(currentPage, templatePage, templateName, request,
+                                            templatesPath, variable);
+                else {
                     Node* p = templatePage;
                     if (variable[0] == '@') {
                         variable = variable.substr(1);
