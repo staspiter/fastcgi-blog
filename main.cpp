@@ -31,10 +31,14 @@ int main() {
         rapidjson::Document json;
         rapidjson::ParseResult result = json.Parse(configJsonStr.c_str());
         if (result) {
-            dir = json.GetObject().FindMember("dir")->value.GetString();
-            templatesPath = json.GetObject().FindMember("templatesPath")->value.GetString();
-            templateHome = json.GetObject().FindMember("templateHome")->value.GetString();
-            template404 = json.GetObject().FindMember("template404")->value.GetString();
+            if (json.GetObject().HasMember("dir"))
+                dir = json.GetObject().FindMember("dir")->value.GetString();
+            if (json.GetObject().HasMember("templatesPath"))
+                templatesPath = json.GetObject().FindMember("templatesPath")->value.GetString();
+            if (json.GetObject().HasMember("templateHome"))
+                templateHome = json.GetObject().FindMember("templateHome")->value.GetString();
+            if (json.GetObject().HasMember("template404"))
+                template404 = json.GetObject().FindMember("template404")->value.GetString();
         }
     }
 
