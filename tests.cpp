@@ -137,9 +137,7 @@ TEST(Generator, PrintAndPage) {
 
 <h1><!-- print(@params/title) --></h1>
 
-<!-- if(path "^/$") -->
 <p>Welcome to the homepage</p>
-<!-- endif -->
 
 <!-- template(category post) -->
 
@@ -151,16 +149,14 @@ TEST(Generator, PrintAndPage) {
     // Create category template
 
     os.open(currentPath + "/testtree/category.html", std::ofstream::out | std::ofstream::trunc);
-    os << R"(
-<div class="category"><!-- print(params/name) --></div>
+    os << R"(<div class="category"><!-- print(params/name) --></div>
 )";
     os.close();
 
     // Create post template
 
     os.open(currentPath + "/testtree/post.html", std::ofstream::out | std::ofstream::trunc);
-    os << R"(
-<div class="post"><!-- print(@params/title) --></div>
+    os << R"(<div class="post"><!-- print(@params/title) --></div>
 )";
     os.close();
 
@@ -191,7 +187,8 @@ TEST(Generator, PrintAndPage) {
     os.open(currentPath + "/testtree/params.json", std::ofstream::out | std::ofstream::trunc);
     os << R"(
 {
-    "sitename": "Test website"
+    "sitename": "Test website",
+    "showgreetings": true
 }
 )";
     os.close();
@@ -201,7 +198,7 @@ TEST(Generator, PrintAndPage) {
 
     auto n = t.getRoot()->getFirst("/blog/post");
 
-    EXPECT_EQ(Generator::Generate(n, t.getRoot(), "home"),
+    EXPECT_EQ(Generator::Generate(n, t.getRoot(), "home", nullptr, "/"),
 
             R"(
 <!DOCTYPE html>
@@ -213,13 +210,9 @@ TEST(Generator, PrintAndPage) {
 
 <h1>This is a post title</h1>
 
-<!-- if(path "^/$") -->
 <p>Welcome to the homepage</p>
-<!-- endif -->
-
 
 <div class="category">This is a category name</div>
-
 <div class="post">This is a post title</div>
 
 
@@ -278,7 +271,7 @@ TEST(Generator, PrintMultipleNodes) {
     auto n = t.getRoot()->getFirst("/");
 
     ASSERT_NE(n, nullptr);
-    EXPECT_EQ(Generator::Generate(n, n, "home"),
+    EXPECT_EQ(Generator::Generate(n, n, "home", nullptr, "/"),
               R"(Items:
 Item number 1
 Item number 2
@@ -289,4 +282,42 @@ Item number 5
 
     std::filesystem::remove_all(currentPath + "/testtree");
 
+}
+
+TEST(Generator, If) {
+
+    std::string currentPath = std::filesystem::current_path().string();
+
+    std::filesystem::create_directory(currentPath + "/testtree");
+
+    // Create home template
+
+    std::ofstream os;
+    os.open(currentPath + "/testtree/home.html", std::ofstream::out | std::ofstream::trunc);
+    os << R"(Conditional output: <!-- if(/params/variable ^hello$) -->Condition is true, <!-- print(/params/variable) --><!-- endif() -->)";
+
+    os.close();
+
+    // Create item template
+
+    os.open(currentPath + "/testtree/params.json", std::ofstream::out | std::ofstream::trunc);
+    os << R"({"variable": "hello"})";
+    os.close();
+
+    Tree t(currentPath + "/testtree");
+    t.build();
+
+    EXPECT_EQ(Generator::Generate(t.getRoot(), t.getRoot(), "home", nullptr, "/"),
+              R"(Conditional output: Condition is true, hello)");
+
+    os.open(currentPath + "/testtree/params.json", std::ofstream::out | std::ofstream::trunc);
+    os << R"({"variable": "world"})";
+    os.close();
+
+    t.build();
+
+    EXPECT_EQ(Generator::Generate(t.getRoot(), t.getRoot(), "home", nullptr, "/"),
+              R"(Conditional output: )");
+
+    std::filesystem::remove_all(currentPath + "/testtree");
 }
