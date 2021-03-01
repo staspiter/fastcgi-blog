@@ -37,7 +37,7 @@ private:
         // FCGI variables
         else if (request) {
 #ifndef tests
-            return FCGX_GetParam(variableName, request->envp);
+            return FCGX_GetParam(variableName.c_str(), request->envp);
 #endif
         }
 
