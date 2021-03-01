@@ -23,14 +23,24 @@ private:
         variableName = variableName.substr(1);
 
         // PATH
-        if (variableName == "PATH" || variableName == "PATH_TEMPLATE") {
+        if (variableName == "@FULLPATH" || variableName == "FULLPATH" || variableName == "PATH"
+            || variableName == "@PATH") {
+
             Node* p = currentPage;
-            if (variableName == "PATH_TEMPLATE")
+            if (variableName[0] == '@')
                 p = templatePage;
-            auto splitPath = Utils::Split(p->getPath(), '/');
+
+            std::string nodePath;
+            if (variableName == "PATH" || variableName == "@PATH")
+                nodePath = p->getKey();
+            else
+                nodePath = p->getPath();
+
+            auto splitPath = Utils::Split(nodePath, '/');
             std::string resultPath;
             for (const auto &path : splitPath)
                 resultPath.append(path.substr(0, path.find_first_of('.')) + '/');
+
             return resultPath;
         }
 
