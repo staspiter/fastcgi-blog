@@ -26,9 +26,9 @@ private:
         if (variableName == "@FULLPATH" || variableName == "FULLPATH" || variableName == "PATH"
             || variableName == "@PATH") {
 
-            Node* p = currentPage;
+            Node* p = templatePage;
             if (variableName[0] == '@')
-                p = templatePage;
+                p = currentPage;
 
             std::string nodePath;
             if (variableName == "PATH" || variableName == "@PATH")
