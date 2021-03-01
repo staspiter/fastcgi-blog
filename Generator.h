@@ -18,7 +18,7 @@ public:
                                 const std::string& templatesPath) {
 
         Node* root = currentPage->getRoot();
-        Node* templateNode = root->getFirst(templatesPath + templateName);
+        Node* templateNode = root->getFirst(templatesPath + '/' + templateName);
 
         if (!templateNode)
             return "";

@@ -21,7 +21,7 @@ int main() {
 
     std::string currentPath = std::filesystem::current_path().string();
     std::string dir = currentPath;
-    std::string templatesPath = "/";
+    std::string templatesPath;
     std::string templateHome = "home";
     std::string template404 = "404";
 
