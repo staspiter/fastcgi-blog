@@ -360,19 +360,9 @@ TEST(Generator, PathVariable) {
 
     auto n = t.getRoot();
 
-    //std::cout << Generator::Generate(n, n, "home", nullptr, "/") << std::endl;
+    EXPECT_EQ(Generator::Generate(n, n, "home", nullptr, "/"),
+              R"(/obj3/obj2/obj1)");
 
     std::filesystem::remove_all(currentPath + "/testtree");
-
-}
-
-TEST(adasd, adsas) {
-
-    Tree t("/Users/stas/Documents/Projects/staspiter.com");
-    t.build();
-
-    auto n = t.getRoot()->getFirst("/blog/");
-
-    std::cout << Generator::Generate(n, n->getRoot(), "home", nullptr, "/templates") << std::endl;
 
 }
