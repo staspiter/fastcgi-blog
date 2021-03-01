@@ -21,19 +21,6 @@ public:
         return result;
     }
 
-    static std::string IsPageApplicable(const std::string& name, const std::string& fullName) {
-        if (name == fullName)
-            return fullName;
-
-        // pagename -> pagename.category.json
-        if (fullName.length() > name.length() && fullName.compare(0, name.length(), name) == 0
-            && fullName[name.length()] == '.') {
-            return fullName;
-        }
-
-        return "";
-    }
-
     static std::vector<std::string> Tokenize(const std::string& str) {
         std::vector<std::string> v;
 

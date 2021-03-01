@@ -33,11 +33,11 @@ TEST(Tree, Build) {
     Tree t(currentPath + "/testtree");
     t.build();
 
-    auto n = t.getRoot()->get("textfile.txt");
+    auto n = t.getRoot()->getFirst("textfile.txt");
     ASSERT_NE(n, nullptr);
     EXPECT_EQ(n->getValue(), "test value");
 
-    n = t.getRoot()->get("/folder/anotherfile.txt");
+    n = t.getRoot()->getFirst("/folder/anotherfile.txt");
     ASSERT_NE(n, nullptr);
     EXPECT_EQ(n->getValue(), "test value 2");
 
@@ -45,7 +45,7 @@ TEST(Tree, Build) {
 
     t.build();
 
-    n = t.getRoot()->get("textfile.txt");
+    n = t.getRoot()->getFirst("textfile.txt");
     EXPECT_EQ(n, nullptr);
 
 };
@@ -73,11 +73,11 @@ TEST(Tree, BuildFromJson) {
     Tree t(currentPath + "/testtree");
     t.build();
 
-    auto n = t.getRoot()->get("/testjson.json/key");
+    auto n = t.getRoot()->getFirst("/testjson.json/key");
     ASSERT_NE(n, nullptr);
     EXPECT_EQ(n->getValue(), "value");
 
-    n = t.getRoot()->get("/testjson.json/object/foo/0");
+    n = t.getRoot()->getFirst("/testjson.json/object/foo/0");
     ASSERT_NE(n, nullptr);
     EXPECT_EQ(n->getValue(), "bar");
 
@@ -108,12 +108,10 @@ TEST(Tree, GetPages) {
     Tree t(currentPath + "/testtree");
     t.build();
 
-    std::vector<std::string> pages;
-
-    auto n = t.getRoot()->get("testjson/key", &pages);
+    auto n = t.getRoot()->getFirst("testjson/key");
     ASSERT_NE(n, nullptr);
     EXPECT_EQ(n->getValue(), "value");
-    EXPECT_EQ(pages[0], "testjson.template.json");
+    EXPECT_EQ(n->getPath(), "/testjson.template.json/key");
 
     std::filesystem::remove_all(currentPath + "/testtree");
 
@@ -201,10 +199,9 @@ TEST(Generator, PrintAndPage) {
     Tree t(currentPath + "/testtree");
     t.build();
 
-    std::vector<std::string> pages;
-    auto n = t.getRoot()->get("/blog/post", &pages);
+    auto n = t.getRoot()->getFirst("/blog/post");
 
-    EXPECT_EQ(Generator::Generate(n, t.getRoot(), "home", &pages),
+    EXPECT_EQ(Generator::Generate(n, t.getRoot(), "home"),
 
             R"(
 <!DOCTYPE html>
@@ -228,6 +225,66 @@ TEST(Generator, PrintAndPage) {
 
 </body>
 </html>
+)");
+
+    std::filesystem::remove_all(currentPath + "/testtree");
+
+}
+
+TEST(Generator, PrintMultipleNodes) {
+
+    std::string currentPath = std::filesystem::current_path().string();
+
+    std::filesystem::create_directory(currentPath + "/testtree");
+
+    // Create home template
+
+    std::ofstream os;
+    os.open(currentPath + "/testtree/home.html", std::ofstream::out | std::ofstream::trunc);
+    os << R"(Items:
+<!-- print(items/.* item) -->)";
+    os.close();
+
+    // Create item template
+
+    os.open(currentPath + "/testtree/item.html", std::ofstream::out | std::ofstream::trunc);
+    os << R"(Item number <!-- print(number) -->
+)";
+    os.close();
+
+    // Create items
+
+    std::filesystem::create_directory(currentPath + "/testtree/items");
+
+    os.open(currentPath + "/testtree/items/1.json", std::ofstream::out | std::ofstream::trunc);
+    os << R"({"number":1})";
+    os.close();
+    os.open(currentPath + "/testtree/items/2.json", std::ofstream::out | std::ofstream::trunc);
+    os << R"({"number":2})";
+    os.close();
+    os.open(currentPath + "/testtree/items/3.json", std::ofstream::out | std::ofstream::trunc);
+    os << R"({"number":3})";
+    os.close();
+    os.open(currentPath + "/testtree/items/4.json", std::ofstream::out | std::ofstream::trunc);
+    os << R"({"number":4})";
+    os.close();
+    os.open(currentPath + "/testtree/items/5.json", std::ofstream::out | std::ofstream::trunc);
+    os << R"({"number":5})";
+    os.close();
+
+    Tree t(currentPath + "/testtree");
+    t.build();
+
+    auto n = t.getRoot()->getFirst("/");
+
+    ASSERT_NE(n, nullptr);
+    EXPECT_EQ(Generator::Generate(n, n, "home"),
+              R"(Items:
+Item number 1
+Item number 2
+Item number 3
+Item number 4
+Item number 5
 )");
 
     std::filesystem::remove_all(currentPath + "/testtree");

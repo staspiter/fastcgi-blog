@@ -16,10 +16,10 @@ class Generator {
 
 public:
 
-    static std::string Generate(Node* currentPage, Node* templatePage, const std::string& templateName, std::vector<std::string>* pages) {
+    static std::string Generate(Node* currentPage, Node* templatePage, const std::string& templateName) {
 
         Node* root = currentPage->getRoot();
-        std::string t = currentPage->getRoot()->get(templateName)->getValue();
+        std::string t = root->getFirst(templateName)->getValue();
         std::string result;
 
         static const std::regex tagRegex(R"(\<\!\-\-\s*(\w+)\((.*?)\)\s*\-\-\>)");
@@ -43,17 +43,41 @@ public:
                     params[0] = params[0].substr(1);
                     p = currentPage;
                 }
-                auto n = p->get(params[0]);
-                if (n)
-                    result.append(n->getValue());
+                std::string subTemplateName;
+                if (params.size() > 1)
+                    subTemplateName = params[1];
+
+                // Print multiple nodes
+                auto nodes = p->get(params[0]);
+
+                for (const auto &n : nodes) {
+
+                    if (subTemplateName.empty()) {
+                        // Try the template of the node
+                        auto splitKey = Utils::Split(n->getKey(), '.');
+                        if (splitKey.size() > 1)
+                            subTemplateName = splitKey[1];
+                        // Check the template of the node exists
+                        if (!root->getFirst(subTemplateName))
+                            subTemplateName = "";
+                    }
+
+                    if (!subTemplateName.empty())
+                        result.append(Generate(templatePage, n, subTemplateName));
+                    else
+                        result.append(n->getValue());
+
+                }
             }
 
             else if (function == "template" && !params.empty()) {
 
+                auto pages = Utils::Split(currentPage->getPath(), '/');
+
                 for (const auto &subTemplateName : params) {
                     std::string pagePath;
                     bool pageFound = false;
-                    for (const auto &page : *pages) {
+                    for (const auto &page : pages) {
                         pagePath += '/' + page;
                         auto pagePathSplit = Utils::Split(page, '.');
                         if (std::find(pagePathSplit.begin(), pagePathSplit.end(), subTemplateName) != pagePathSplit.end()) {
@@ -63,9 +87,8 @@ public:
                     }
 
                     if (pageFound) {
-                        std::vector<std::string> newPages;
-                        auto n = root->get(pagePath, &newPages);
-                        std::string subTemplate = Generate(currentPage, n, subTemplateName, &newPages);
+                        auto n = root->getFirst(pagePath);
+                        std::string subTemplate = Generate(currentPage, n, subTemplateName);
 
                         result.append(subTemplate);
                     }

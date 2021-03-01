@@ -9,6 +9,7 @@
 #include <tuple>
 #include <string>
 #include <filesystem>
+#include <regex>
 
 #include "Utils.h"
 
@@ -22,13 +23,15 @@ private:
 
     std::vector<std::tuple<std::string, Node*>> sub;
     Node* parent;
+    std::string key;
     std::string value;
 
 public:
 
-    Node(const std::string& value = "", Node* parent = nullptr) {
+    Node(const std::string& value = "", const std::string& key = "", Node* parent = nullptr) {
         this->value = value;
         this->parent = parent;
+        this->key = key;
     }
 
     ~Node() {
@@ -40,8 +43,9 @@ public:
 
         if (json.IsObject()) {
             for (auto& [key, value] : json.GetObject()) {
-                Node* n = new Node("", this);
-                sub.emplace_back(key.GetString(), n);
+                auto keyStr = key.GetString();
+                Node* n = new Node("", keyStr, this);
+                sub.emplace_back(keyStr, n);
                 n->buildFromJson(value);
             }
         }
@@ -49,8 +53,9 @@ public:
         else if (json.IsArray()) {
             int i = 0;
             for (auto& item: json.GetArray()) {
-                Node* n = new Node("", this);
-                sub.emplace_back(std::to_string(i), n);
+                auto keyStr = std::to_string(i);
+                Node* n = new Node("", keyStr, this);
+                sub.emplace_back(keyStr, n);
                 n->buildFromJson(item);
                 i++;
             }
@@ -99,7 +104,7 @@ public:
                         continue;
                 }
 
-                Node* n = new Node("", this);
+                Node* n = new Node("", itemStr, this);
                 sub.emplace_back(itemStr, n);
                 n->build(path + '/' + itemStr);
 
@@ -131,51 +136,89 @@ public:
         }
     }
 
-    Node* get(std::vector<std::string>& pathVector, std::vector<std::string>* pages = nullptr) {
+    std::vector<Node*> get(std::vector<std::string>& pathVector) {
 
         if (pathVector.empty())
-            return this;
+            return {};
 
-        std::string p = pathVector[0];
-        pathVector.erase(pathVector.begin());
+        std::vector<Node*> result;
+        std::vector<Node*> nodes = {this};
+        std::vector<Node*> newNodes;
 
-        Node* nextNode = nullptr;
+        for (int i = 0; i < pathVector.size(); i++) {
+            std::string& s = pathVector[i];
 
-        if (p.empty())
-            nextNode = getRoot();
+            if (s.empty())
+                newNodes = {getRoot()};
 
-        else {
-            for (const auto &n : sub) {
-                auto applicablePage = Utils::IsPageApplicable(p, std::get<0>(n));
-                if (!applicablePage.empty()) {
-                    if (pages)
-                        pages->push_back(applicablePage);
-                    nextNode = std::get<1>(n);
-                    break;
-                }
+            else {
+
+                std::regex sRegex(s);
+
+                for (const auto &n : nodes)
+                    for (const auto &n1pair: n->sub) {
+                        Node* n1 = std::get<1>(n1pair);
+
+                        if (
+                            // path = 'file.template.json', node = 'file.template.json'
+                            (n1->key == s) ||
+
+                            // path = 'file', node = 'file.template.json'
+                            (n1->key.length() > s.length() && n1->key.compare(0, s.length(), s) == 0
+                             && n1->key[s.length()] == '.') ||
+
+                            // path = regular expression
+                            std::regex_match(n1->key, sRegex)
+                            )
+
+                            newNodes.push_back(n1);
+                    }
             }
+
+            if (i == pathVector.size() - 1)
+                for (const auto &n : newNodes)
+                    result.push_back(n);
+
+            nodes = newNodes;
+            newNodes.clear();
+
         }
 
-        if (!nextNode)
-            return nullptr;
-
-        return nextNode->get(pathVector, pages);
+        return result;
 
     }
 
-    Node* get(const std::string& path, std::vector<std::string>* pages = nullptr) {
+    std::vector<Node*> get(const std::string& path) {
         auto v = Utils::Split(path, '/');
-        return get(v, pages);
+        return get(v);
+    }
+
+    Node* getFirst(const std::string& path) {
+        auto v = Utils::Split(path, '/');
+        auto r = get(v);
+        if (r.empty())
+            return nullptr;
+        return r[0];
     }
 
     Node* getRoot() {
-        if (parent == nullptr)
+        if (!parent)
             return this;
         return parent->getRoot();
     }
 
-    std::string getValue() {
+    const std::string& getValue() {
         return value;
+    }
+
+    const std::string& getKey() {
+        return key;
+    }
+
+    std::string getPath() {
+        if (parent)
+            return parent->getPath() + '/' + key;
+        return key;
     }
 
 };
