@@ -39,7 +39,7 @@ int main() {
 
     // Load tree
 
-    Tree t(std::filesystem::current_path().string() + dir);
+    Tree t(std::filesystem::current_path().string() + '/' + dir);
     t.build();
 
     std::streambuf * cin_streambuf  = std::cin.rdbuf();
