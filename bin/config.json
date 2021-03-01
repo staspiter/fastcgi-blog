@@ -1,3 +1,4 @@
 {
-	"dir": "/var/www/staspiter.com"
+	"dir": "/var/www/staspiter.com",
+	"templatesPath": "/templates"
 }
