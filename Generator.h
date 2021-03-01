@@ -7,8 +7,9 @@
 
 #include <regex>
 
-#include "Tree.h"
 #include "fcgio.h"
+
+#include "Tree.h"
 
 class Generator {
 
@@ -23,8 +24,8 @@ private:
         variableName = variableName.substr(1);
 
         // PATH
-        if (variableName == "@FULLPATH" || variableName == "FULLPATH" || variableName == "PATH"
-            || variableName == "@PATH") {
+
+        if (variableName == "@FULLPATH" || variableName == "FULLPATH" || variableName == "PATH" || variableName == "@PATH") {
 
             Node* p = templatePage;
             if (variableName[0] == '@')
@@ -41,10 +42,14 @@ private:
             for (const auto &path : splitPath)
                 resultPath.append(path.substr(0, path.find_first_of('.')) + '/');
 
-            return resultPath;
+            if (resultPath.empty())
+                return "";
+
+            return resultPath.substr(0, resultPath.length() - 1);
         }
 
         // FCGI variables
+
         else if (request) {
 #ifndef tests
             return FCGX_GetParam(variableName.c_str(), request->envp);
@@ -120,7 +125,7 @@ public:
                         }
 
                         if (!subTemplateName.empty())
-                            result.append(Generate(currentPage, n, subTemplateName, nullptr, templatesPath));
+                            result.append(Generate(currentPage, n, subTemplateName, request, templatesPath));
                         else
                             result.append(n->getValue());
 
@@ -147,7 +152,7 @@ public:
 
                     if (pageFound) {
                         auto n = root->getFirst(pagePath);
-                        std::string subTemplate = Generate(currentPage, n, subTemplateName, nullptr, templatesPath);
+                        std::string subTemplate = Generate(currentPage, n, subTemplateName, request, templatesPath);
 
                         result.append(subTemplate);
                     }
@@ -162,8 +167,7 @@ public:
                 std::string variable = params[0];
                 std::string value;
                 if (variable[0] == '$')
-                    value = ProcessVariable(currentPage, templatePage, templateName, request,
-                                            templatesPath, variable);
+                    value = ProcessVariable(currentPage, templatePage, templateName, request, templatesPath, variable);
                 else {
                     Node* p = templatePage;
                     if (variable[0] == '@') {

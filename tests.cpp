@@ -321,3 +321,58 @@ TEST(Generator, If) {
 
     std::filesystem::remove_all(currentPath + "/testtree");
 }
+
+TEST(Generator, PathVariable) {
+
+    std::string currentPath = std::filesystem::current_path().string();
+
+    std::filesystem::create_directory(currentPath + "/testtree");
+
+    // Create home template
+
+    std::ofstream os;
+    os.open(currentPath + "/testtree/home.html", std::ofstream::out | std::ofstream::trunc);
+    os << R"(<!-- print(^obj\d+.*$ object) -->)";
+    os.close();
+
+    // Create object template
+
+    os.open(currentPath + "/testtree/object.html", std::ofstream::out | std::ofstream::trunc);
+    os << R"(<!-- print($FULLPATH) -->)";
+    os.close();
+
+    // Create object
+
+    os.open(currentPath + "/testtree/obj1.object.json", std::ofstream::out | std::ofstream::trunc);
+    os << R"({"variable": "hello"})";
+    os.close();
+
+    os.open(currentPath + "/testtree/obj2.object.json", std::ofstream::out | std::ofstream::trunc);
+    os << R"({"variable": "hello"})";
+    os.close();
+
+    os.open(currentPath + "/testtree/obj3.object.json", std::ofstream::out | std::ofstream::trunc);
+    os << R"({"variable": "hello"})";
+    os.close();
+
+    Tree t(currentPath + "/testtree");
+    t.build();
+
+    auto n = t.getRoot();
+
+    //std::cout << Generator::Generate(n, n, "home", nullptr, "/") << std::endl;
+
+    std::filesystem::remove_all(currentPath + "/testtree");
+
+}
+
+TEST(adasd, adsas) {
+
+    Tree t("/Users/stas/Documents/Projects/staspiter.com");
+    t.build();
+
+    auto n = t.getRoot()->getFirst("/blog/");
+
+    std::cout << Generator::Generate(n, n->getRoot(), "home", nullptr, "/templates") << std::endl;
+
+}
