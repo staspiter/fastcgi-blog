@@ -120,7 +120,7 @@ public:
                         }
 
                         if (!subTemplateName.empty())
-                            result.append(Generate(templatePage, n, subTemplateName, nullptr, templatesPath));
+                            result.append(Generate(currentPage, n, subTemplateName, nullptr, templatesPath));
                         else
                             result.append(n->getValue());
 
