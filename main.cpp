@@ -19,13 +19,14 @@ int main() {
 
     // Load config
 
-    std::string dir = std::filesystem::current_path().string();
+    std::string currentPath = std::filesystem::current_path().string();
+    std::string dir = currentPath;
     std::string templatesPath = "/";
     std::string templateHome = "home";
     std::string template404 = "404";
 
-    if (std::filesystem::exists("config.json")) {
-        std::ifstream t("config.json");
+    if (std::filesystem::exists(currentPath + "/config.json")) {
+        std::ifstream t(currentPath + "/config.json");
         std::string configJsonStr((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
         rapidjson::Document json;
         rapidjson::ParseResult result = json.Parse(configJsonStr.c_str());
